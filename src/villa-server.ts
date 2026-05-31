@@ -76,7 +76,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'change-this-in-production-to-64-ch
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || JWT_SECRET + '-refresh';
 
 const app = express();
-const PORT = process.env.VILLA_PORT || 3004;
+// Render / Heroku / Railway / Fly all inject the bound port as PORT.
+// Locally we use VILLA_PORT so it doesn't collide with the web-ui dev server's PORT.
+const PORT = process.env.PORT || process.env.VILLA_PORT || 3004;
 const HOST = process.env.VILLA_HOST || '0.0.0.0';
 
 // Disable ETags so browsers can't revalidate and get 304 for API responses.
