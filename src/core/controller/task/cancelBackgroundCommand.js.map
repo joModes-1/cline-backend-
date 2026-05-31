@@ -1,0 +1,1 @@
+{"version":3,"file":"cancelBackgroundCommand.js","sourceRoot":"","sources":["cancelBackgroundCommand.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,EAAgB,MAAM,4BAA4B,CAAA;AAGhE,MAAM,CAAC,KAAK,UAAU,uBAAuB,CAAC,UAAsB,EAAE,QAAsB;IAC3F,MAAM,oBAAoB,GAAG,UAE5B,CAAA;IACD,MAAM,oBAAoB,CAAC,uBAAuB,EAAE,CAAA;IACpD,OAAO,KAAK,CAAC,MAAM,EAAE,CAAA;AACtB,CAAC"}

@@ -1,0 +1,13 @@
+import { HostProvider } from "@/hosts/host-provider";
+import { openExternal } from "@/utils/env";
+/**
+ * Initiates OpenRouter auth
+ */
+export async function openrouterAuthClicked(_, __) {
+    const callbackUrl = await HostProvider.get().getCallbackUrl("/openrouter");
+    const authUrl = new URL("https://openrouter.ai/auth");
+    authUrl.searchParams.set("callback_url", callbackUrl);
+    await openExternal(authUrl.toString());
+    return {};
+}
+//# sourceMappingURL=openrouterAuthClicked.js.map

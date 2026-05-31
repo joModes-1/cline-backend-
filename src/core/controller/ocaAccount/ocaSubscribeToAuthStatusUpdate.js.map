@@ -1,0 +1,1 @@
+{"version":3,"file":"ocaSubscribeToAuthStatusUpdate.js","sourceRoot":"","sources":["ocaSubscribeToAuthStatusUpdate.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,cAAc,EAAE,MAAM,oCAAoC,CAAA;AAInE,MAAM,CAAC,KAAK,UAAU,8BAA8B,CACnD,WAAuB,EACvB,OAAqB,EACrB,cAAsD,EACtD,SAAkB;IAElB,OAAO,cAAc,CAAC,WAAW,EAAE,CAAC,2BAA2B,CAAC,OAAO,EAAE,cAAc,EAAE,SAAS,CAAC,CAAA;AACpG,CAAC"}

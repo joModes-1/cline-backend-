@@ -1,0 +1,136 @@
+import { isMultiRootEnabled } from "@core/workspace/multi-root-utils";
+import { ClineDefaultTool } from "@shared/tools";
+import { HostProvider } from "@/hosts/host-provider";
+import { isLocatedInWorkspace } from "@/utils/path";
+export class AutoApprove {
+    stateManager;
+    // Cache for workspace paths - populated on first access and reused for the task lifetime
+    // NOTE: This assumes that the task has a fixed set of workspace roots(which is currently true).
+    workspacePathsCache = null;
+    isMultiRootScenarioCache = null;
+    constructor(stateManager) {
+        this.stateManager = stateManager;
+    }
+    /**
+     * Get workspace information with caching to avoid repeated API calls
+     * Cache is task-scoped since each task gets a new AutoApprove instance
+     */
+    async getWorkspaceInfo() {
+        // Check if we already have cached values
+        if (this.workspacePathsCache === null || this.isMultiRootScenarioCache === null) {
+            // First time - fetch and cache for the lifetime of this task
+            this.workspacePathsCache = await HostProvider.workspace.getWorkspacePaths({});
+            this.isMultiRootScenarioCache = isMultiRootEnabled(this.stateManager) && this.workspacePathsCache.paths.length > 1;
+        }
+        return {
+            workspacePaths: this.workspacePathsCache,
+            isMultiRootScenario: this.isMultiRootScenarioCache,
+        };
+    }
+    // Check if the tool should be auto-approved based on the settings
+    // Returns bool for most tools, and tuple for tools with nested settings
+    shouldAutoApproveTool(toolName) {
+        if (this.stateManager.getGlobalSettingsKey("yoloModeToggled")) {
+            switch (toolName) {
+                case ClineDefaultTool.FILE_READ:
+                case ClineDefaultTool.LIST_FILES:
+                case ClineDefaultTool.LIST_CODE_DEF:
+                case ClineDefaultTool.SEARCH:
+                case ClineDefaultTool.NEW_RULE:
+                case ClineDefaultTool.FILE_NEW:
+                case ClineDefaultTool.FILE_EDIT:
+                case ClineDefaultTool.APPLY_PATCH:
+                case ClineDefaultTool.BASH:
+                case ClineDefaultTool.USE_SUBAGENTS:
+                    return [true, true];
+                case ClineDefaultTool.BROWSER:
+                case ClineDefaultTool.WEB_FETCH:
+                case ClineDefaultTool.WEB_SEARCH:
+                case ClineDefaultTool.MCP_ACCESS:
+                case ClineDefaultTool.MCP_USE:
+                    return true;
+            }
+        }
+        if (this.stateManager.getGlobalSettingsKey("autoApproveAllToggled")) {
+            switch (toolName) {
+                case ClineDefaultTool.FILE_READ:
+                case ClineDefaultTool.LIST_FILES:
+                case ClineDefaultTool.LIST_CODE_DEF:
+                case ClineDefaultTool.SEARCH:
+                case ClineDefaultTool.NEW_RULE:
+                case ClineDefaultTool.FILE_NEW:
+                case ClineDefaultTool.FILE_EDIT:
+                case ClineDefaultTool.APPLY_PATCH:
+                case ClineDefaultTool.BASH:
+                case ClineDefaultTool.USE_SUBAGENTS:
+                    return [true, true];
+                case ClineDefaultTool.BROWSER:
+                case ClineDefaultTool.WEB_FETCH:
+                case ClineDefaultTool.WEB_SEARCH:
+                case ClineDefaultTool.MCP_ACCESS:
+                case ClineDefaultTool.MCP_USE:
+                    return true;
+            }
+        }
+        const autoApprovalSettings = this.stateManager.getGlobalSettingsKey("autoApprovalSettings");
+        switch (toolName) {
+            case ClineDefaultTool.FILE_READ:
+            case ClineDefaultTool.LIST_FILES:
+            case ClineDefaultTool.LIST_CODE_DEF:
+            case ClineDefaultTool.SEARCH:
+            case ClineDefaultTool.USE_SUBAGENTS:
+                return [autoApprovalSettings.actions.readFiles, autoApprovalSettings.actions.readFilesExternally ?? false];
+            case ClineDefaultTool.NEW_RULE:
+            case ClineDefaultTool.FILE_NEW:
+            case ClineDefaultTool.FILE_EDIT:
+            case ClineDefaultTool.APPLY_PATCH:
+                return [autoApprovalSettings.actions.editFiles, autoApprovalSettings.actions.editFilesExternally ?? false];
+            case ClineDefaultTool.BASH:
+                return [
+                    autoApprovalSettings.actions.executeSafeCommands ?? false,
+                    autoApprovalSettings.actions.executeAllCommands ?? false,
+                ];
+            case ClineDefaultTool.BROWSER:
+                return autoApprovalSettings.actions.useBrowser;
+            case ClineDefaultTool.WEB_FETCH:
+            case ClineDefaultTool.WEB_SEARCH:
+                return autoApprovalSettings.actions.useBrowser;
+            case ClineDefaultTool.MCP_ACCESS:
+            case ClineDefaultTool.MCP_USE:
+                return autoApprovalSettings.actions.useMcp;
+        }
+        return false;
+    }
+    // Check if the tool should be auto-approved based on the settings
+    // and the path of the action. Returns true if the tool should be auto-approved
+    // based on the user's settings and the path of the action.
+    async shouldAutoApproveToolWithPath(blockname, autoApproveActionpath) {
+        if (this.stateManager.getGlobalSettingsKey("yoloModeToggled")) {
+            return true;
+        }
+        if (this.stateManager.getGlobalSettingsKey("autoApproveAllToggled")) {
+            return true;
+        }
+        let isLocalRead = false;
+        if (autoApproveActionpath) {
+            // Use workspace roots reported by the host to determine if an operation is local.
+            // This is critical for backend-driven tasks (e.g. code review autofix) which override
+            // the workspace root to the repository's localPath.
+            isLocalRead = await isLocatedInWorkspace(autoApproveActionpath);
+        }
+        else {
+            // If we do not get a path for some reason, default to a (safer) false return
+            isLocalRead = false;
+        }
+        // Get auto-approve settings for local and external edits
+        const autoApproveResult = this.shouldAutoApproveTool(blockname);
+        const [autoApproveLocal, autoApproveExternal] = Array.isArray(autoApproveResult)
+            ? autoApproveResult
+            : [autoApproveResult, false];
+        if ((isLocalRead && autoApproveLocal) || (!isLocalRead && autoApproveLocal && autoApproveExternal)) {
+            return true;
+        }
+        return false;
+    }
+}
+//# sourceMappingURL=autoApprove.js.map

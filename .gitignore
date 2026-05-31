@@ -1,0 +1,86 @@
+out
+dist
+dist-standalone
+node_modules
+tmp
+.vscode-test/
+*.vsix
+
+.DS_Store
+.idea
+.husky/_/
+
+pnpm-lock.yaml
+
+.clineignore
+.venv
+.actrc
+CLAUDE.local.md
+
+webview-ui/src/**/*.js
+webview-ui/src/**/*.js.map
+
+# Ignore coverage directories and files
+coverage
+coverage-unit
+.nyc_output
+# But don't ignore the coverage scripts in .github/scripts/
+!.github/scripts/coverage/
+
+*evals.env
+.env
+.secrets
+.github/act/.secrets
+
+.worktrees
+
+## Generated files ##
+src/generated/
+src/shared/proto/
+webview-ui/src/services/grpc-client.ts
+*.tsbuildinfo
+
+# E2E Tests
+test-results
+
+/.github/act
+/pkg
+.secrets
+
+# ─── Villa backend runtime data — never commit ─────────────────────
+# User-uploaded / cloned repositories (can be huge, contain user code)
+.villa-repos/
+# AI scan caches (per-file hashes of user code + AI responses)
+.villa-cache/
+# Multi-root workspace state
+.villa-workspaces/
+# Multer file uploads
+.villa-uploads/
+.villa-uploads
+.villa-uploads/**
+# Cline task data: conversation history, API call logs (sensitive!)
+.cline-data/
+# Local Cline cache
+.cline-cache/
+# Server-dev log (may contain request bodies, tokens, error stacks)
+server-dev.log
+*.log
+# Local dev one-offs / debug files
+.tmp-*
+*.tmp.ts
+*.tmp.json
+# Compiled .pem files (private keys)
+*.pem
+# Local IDE
+.vscode/
+*.code-workspace
+
+*.tsbuildinfo
+
+# Smoke test results (generated)
+evals/smoke-tests/results/
+
+.tui-test
+secrets.json
+tui-traces
+tests/**/cache
