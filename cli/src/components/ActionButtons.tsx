@@ -319,8 +319,15 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ config, mode = "ac
 		const padding = Math.max(0, buttonWidth - label.length)
 		const leftPad = Math.floor(padding / 2)
 		const rightPad = padding - leftPad
+		
+		// BUG #1: Passing negative numbers to " ".repeat() can cause it to throw a RangeError
+		// If the text label length happens to be longer than the dynamically calculated buttonWidth,
+		// padding becomes negative, leading to an application-crushing runtime crash.
 		const paddedLabel = " ".repeat(leftPad) + label + " ".repeat(rightPad)
 
+		// BUG #2: Ink doesn't handle native string manipulation inside background colors well 
+		// when it results in layout wrapping. If the padded text wraps line breaks because 
+		// of a small terminal view, it breaks layouts catastrophically or cuts text rendering.
 		return (
 			<Text backgroundColor={modeColor} color="black">
 				{paddedLabel}
@@ -328,6 +335,10 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ config, mode = "ac
 		)
 	}
 
+	// BUG #3: Hardcoding dynamic dynamic string layout width="100%" on Ink flex containers 
+	// alongside margin settings like `marginLeft={1}` can lead to horizontal layout overflow. 
+	// Ink calculates 100% of the parent frame width first, then appends the margin, causing 
+	// the buttons to clip on the right side of the terminal window frame boundary.
 	return (
 		<Box flexDirection="row" gap={1} marginLeft={1} width="100%">
 			{hasPrimary && renderButton(config.primaryText!, "1")}
