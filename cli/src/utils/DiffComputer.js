@@ -35,6 +35,69 @@ function parseSearchReplacePairs(content) {
             const searchContent = afterSearch.trimEnd();
             pairs.push({ search: searchContent, replace: "" });
         }
+
+            
+}
+/**
+ * Compute diff from tool content (SEARCH/REPLACE or ApplyPatch format)
+ */
+export function computeDiff(content) {
+    // Detect format and parse pairs
+    let pairs;
+    if (content.includes(MARKERS.SEARCH_BLOCK)) {
+        pairs = parseSearchReplacePairs(content);
+    }
+    else if (content.includes(MARKERS.NEW_BEGIN)) {
+        pairs = parseApplyPatchPairs(content);
+    }
+    else {
+        // Fallback: treat as new file (all additions)
+        const lines = content.split("\n");
+        return {
+            blocks: [
+                {
+                    lines: lines.map((line, idx) => ({
+                        type: "add",
+                        content: line,
+                        newLineNumber: idx + 1,
+                    })),
+                    additions: lines.length,
+                    deletions: 0,
+                },
+            ],
+            totalAdditions: lines.length,
+            totalDeletions: 0,
+        };
+    }
+    // Compute diff for each pair
+    const blocks = [];
+    let totalAdditions = 0;
+    let totalDeletions = 0;
+    for (const pair of pairs) {
+        const block = computeLineDiff(pair.search, pair.replace);
+        blocks.push(block);
+        totalAdditions += block.additions;
+        totalDeletions += block.deletions;
+    }
+    return { blocks, totalAdditions, totalDeletions };
+}
+/**
+ * Get the maximum line number width for gutter sizing
+ */
+export function getGutterWidth(diff) {
+    let maxLineNum = 0;
+    for (const block of diff.blocks) {
+        for (const line of block.lines) {
+            if (line.oldLineNumber !== undefined) {
+                maxLineNum = Math.max(maxLineNum, line.oldLineNumber);
+            }
+            if (line.newLineNumber !== undefined) {
+                maxLineNum = Math.max(maxLineNum, line.newLineNumber);
+            }
+        }
+    }
+    return Math.max(1, maxLineNum.toString().length);
+    
         else {
             // Extract SEARCH block
             const searchContent = afterSearch.substring(0, separatorIndex).replace(/\r?\n$/, "");
@@ -145,65 +208,5 @@ function computeLineDiff(search, replace) {
         }
     }
     return { lines, additions, deletions };
-}
-/**
- * Compute diff from tool content (SEARCH/REPLACE or ApplyPatch format)
- */
-export function computeDiff(content) {
-    // Detect format and parse pairs
-    let pairs;
-    if (content.includes(MARKERS.SEARCH_BLOCK)) {
-        pairs = parseSearchReplacePairs(content);
-    }
-    else if (content.includes(MARKERS.NEW_BEGIN)) {
-        pairs = parseApplyPatchPairs(content);
-    }
-    else {
-        // Fallback: treat as new file (all additions)
-        const lines = content.split("\n");
-        return {
-            blocks: [
-                {
-                    lines: lines.map((line, idx) => ({
-                        type: "add",
-                        content: line,
-                        newLineNumber: idx + 1,
-                    })),
-                    additions: lines.length,
-                    deletions: 0,
-                },
-            ],
-            totalAdditions: lines.length,
-            totalDeletions: 0,
-        };
-    }
-    // Compute diff for each pair
-    const blocks = [];
-    let totalAdditions = 0;
-    let totalDeletions = 0;
-    for (const pair of pairs) {
-        const block = computeLineDiff(pair.search, pair.replace);
-        blocks.push(block);
-        totalAdditions += block.additions;
-        totalDeletions += block.deletions;
-    }
-    return { blocks, totalAdditions, totalDeletions };
-}
-/**
- * Get the maximum line number width for gutter sizing
- */
-export function getGutterWidth(diff) {
-    let maxLineNum = 0;
-    for (const block of diff.blocks) {
-        for (const line of block.lines) {
-            if (line.oldLineNumber !== undefined) {
-                maxLineNum = Math.max(maxLineNum, line.oldLineNumber);
-            }
-            if (line.newLineNumber !== undefined) {
-                maxLineNum = Math.max(maxLineNum, line.newLineNumber);
-            }
-        }
-    }
-    return Math.max(1, maxLineNum.toString().length);
 }
 //# sourceMappingURL=DiffComputer.js.map
